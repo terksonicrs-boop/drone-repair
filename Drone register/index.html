@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียนโดรนเกษตร</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+        /* ปรับพื้นหลังเป็นสีเหลืองอ่อน */
+        body { background-color: #FEF9C3; }
+        /* ปรับ Header เป็นไล่สี เหลืองไปแดง */
+        .hero-gradient { background: linear-gradient(135deg, #FDE047 0%, #EF4444 100%); }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-red-500">
+        <div class="hero-gradient p-6 text-center">
+            <h1 class="text-2xl font-bold text-white drop-shadow-md">ลงทะเบียนแจ้งซ่อมโดรน</h1>
+            <p class="text-yellow-100 text-sm mt-1 drop-shadow-sm">บริการรวดเร็ว ทันใจ โดยทีมงานมืออาชีพ</p>
+        </div>
+
+        <form id="regForm" class="p-6 space-y-4">
+            <div class="flex flex-col items-center mb-6">
+                <img id="userImg" class="w-20 h-20 rounded-full border-4 border-yellow-400 shadow-md hidden">
+                <p id="userName" class="text-gray-800 font-semibold mt-2">กำลังดึงข้อมูล LINE...</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">ชื่อเจ้าของ / ชื่อฟาร์ม</label>
+                <input type="text" id="custName" class="w-full mt-1 p-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none" placeholder="เช่น ไร่สมชาย" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">เบอร์โทรศัพท์</label>
+                <input type="tel" id="custPhone" class="w-full mt-1 p-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none" placeholder="08XXXXXXXX" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">รุ่นโดรนเกษตร</label>
+                <select id="droneModel" class="w-full mt-1 p-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white">
+                    <option value="DJI Agras T40">DJI Agras T40</option>
+                    <option value="DJI Agras T20P">DJI Agras T20P</option>
+                    <option value="DJI Agras T30">DJI Agras T30</option>
+                    <option value="DJI Agras T25">DJI Agras T25</option>
+                    <option value="XAG V40">XAG V40</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">Serial Number (S/N)</label>
+                <input type="text" id="droneSN" class="w-full mt-1 p-3 border-2 border-red-500 rounded-lg focus:ring-2 focus:ring-red-600 outline-none font-mono" placeholder="ตรวจสอบได้ที่ข้างเครื่อง" required>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-xl shadow-lg hover:bg-red-700 active:scale-95 transition duration-200 border-b-4 border-red-800">
+                ยืนยันการลงทะเบียน
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const LIFF_ID = "2008900854-1iH5XfxH"; 
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA9gol4opQquit4shln2pkBZpr40cGDHqFjOy3b1nOTUFZ0hSGAagW82ADvJK_zaPjMA/exec";
+
+        let userId = "";
+
+        async function initLine() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    const profile = await liff.getProfile();
+                    userId = profile.userId;
+                    document.getElementById('userName').innerText = "สวัสดีคุณ " + profile.displayName;
+                    document.getElementById('userImg').src = profile.pictureUrl;
+                    document.getElementById('userImg').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("LIFF Error:", err);
+            }
+        }
+        initLine();
+
+        document.getElementById('regForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = "กำลังบันทึกข้อมูล...";
+
+            const data = {
+                uid: userId,
+                name: document.getElementById('custName').value,
+                phone: document.getElementById('custPhone').value,
+                model: document.getElementById('droneModel').value,
+                sn: document.getElementById('droneSN').value
+            };
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(data)
+                });
+                
+                alert('ลงทะเบียนสำเร็จ! ข้อมูลโดรนของคุณถูกบันทึกเรียบร้อยแล้ว');
+                liff.closeWindow(); 
+            } catch (error) {
+                alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+                btn.disabled = false;
+                btn.innerHTML = "ยืนยันการลงทะเบียน";
+            }
+        });
+    </script>
+</body>
+</html>
